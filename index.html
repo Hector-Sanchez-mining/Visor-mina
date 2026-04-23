@@ -6,57 +6,93 @@
   <title>Visor 3D</title>
 
   <link rel="manifest" href="manifest.json">
+
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
     canvas { display: block; }
   </style>
 </head>
+
 <body>
 
 <script type="module">
+
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/controls/OrbitControls.js";
 import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/STLLoader.js";
 
 const scene = new THREE.Scene();
 
+// --- cámara ---
 const camera = new THREE.PerspectiveCamera(
   60,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  10000
 );
 
-camera.position.set(0, 0, 100);
+camera.position.set(0, 0, 200);
 
+// --- renderer ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
+// --- controles ---
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+// --- luces ---
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-const light = new THREE.DirectionalLight(0xffffff, 0.5);
+const light = new THREE.DirectionalLight(0xffffff, 0.6);
 light.position.set(1, 1, 1);
 scene.add(light);
 
-// -------- cargar modelo --------
+// =====================================================
+// CARGA STL
+// =====================================================
+
 const loader = new STLLoader();
 
-// cambia esto por tus archivos luego
-loader.load("modelos/ejemplo.stl", geometry => {
-  geometry.center();
+loader.load(
+  "modelos/ejemplo.stl",
 
-  const material = new THREE.MeshLambertMaterial({ color: 0x00ffcc });
-  const mesh = new THREE.Mesh(geometry, material);
+  function (geometry) {
 
-  scene.add(mesh);
-});
+    console.log("STL cargado correctamente");
 
-// -------- render loop --------
+    // importante: limpiar geometría
+    geometry.computeBoundingBox();
+    geometry.center();
+
+    const material = new THREE.MeshNormalMaterial();
+
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // 🔴 AJUSTE AUTOMÁTICO DE CÁMARA (CRÍTICO)
+    const box = new THREE.Box3().setFromObject(mesh);
+    const size = box.getSize(new THREE.Vector3()).length();
+
+    camera.position.set(0, 0, size * 1.2);
+    camera.lookAt(0, 0, 0);
+
+    controls.update();
+  },
+
+  undefined,
+
+  function (error) {
+    console.error("Error cargando STL:", error);
+  }
+);
+
+// =====================================================
+// LOOP
+// =====================================================
+
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
@@ -65,17 +101,24 @@ function animate() {
 
 animate();
 
-// -------- resize --------
+// =====================================================
+// RESIZE
+// =====================================================
+
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// -------- service worker --------
+// =====================================================
+// SERVICE WORKER
+// =====================================================
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
+
 </script>
 
 </body>
