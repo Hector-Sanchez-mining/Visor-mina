@@ -388,8 +388,8 @@
     if (e.touches.length === 1 && isDragging) {
       const dx = e.touches[0].clientX - prevX;
       const dy = e.touches[0].clientY - prevY;
-      rotY -= dx * 0.4;
-      rotX -= dy * 0.4;
+      rotY += dx * 0.4;
+      rotX += dy * 0.4;
       prevX = e.touches[0].clientX;
       prevY = e.touches[0].clientY;
     } else if (e.touches.length === 2) {
@@ -419,8 +419,8 @@
   });
   container.addEventListener('mousemove', e => {
     if (!isDragging) return;
-    rotY -= (e.clientX - prevX) * 0.3;
-    rotX -= (e.clientY - prevY) * 0.3;
+    rotY += (e.clientX - prevX) * 0.3;
+    rotX += (e.clientY - prevY) * 0.3;
     prevX = e.clientX;
     prevY = e.clientY;
   });
@@ -459,7 +459,7 @@
   function animate() {
     requestAnimationFrame(animate);
 
-    if (autoRotate) rotY -= 0.2;
+    if (autoRotate) rotY += 0.2;
 
     if (mesh) {
       mesh.rotation.x = THREE.MathUtils.degToRad(rotX);
@@ -489,3 +489,4 @@
 </script>
 </body>
 </html>
+
