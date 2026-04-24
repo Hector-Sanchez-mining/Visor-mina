@@ -720,36 +720,10 @@
 
     await Promise.all(promises);
 
-    // Reset group rotation before computing bounding box — otherwise Box3 is skewed
-    sceneGroup.rotation.set(0, 0, 0);
-    sceneGroup.updateMatrixWorld(true);
-
     panX = 0; panY = 0; rotX = 0; rotY = 0; zoom = 1;
-    centerZoneAtOrigin(zone);
     fitCamera();
     hideLoading();
     renderModelList();
-  }
-
-  /* ═══════════════════════════════════════════════
-     CENTER — mueve todos los meshes de la zona para
-     que su bounding box colectivo quede en el origen.
-     Debe llamarse con sceneGroup.rotation en cero.
-  ═══════════════════════════════════════════════ */
-  function centerZoneAtOrigin(zone) {
-    const box = new THREE.Box3();
-    let hasAny = false;
-    zone.models.forEach(m => {
-      if (m.mesh) { box.expandByObject(m.mesh); hasAny = true; }
-    });
-    if (!hasAny) return;
-
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-
-    zone.models.forEach(m => {
-      if (m.mesh) m.mesh.position.sub(center);
-    });
   }
 
   /* ═══════════════════════════════════════════════
@@ -757,10 +731,17 @@
   ═══════════════════════════════════════════════ */
   function renderModelList() {
     modelListEl.innerHTML = '';
-    const zone = zones[activeZoneIdx];
-    if (!zone || !zone.models.length) return;
+    // Show all models across ALL loaded zones
+    zones.forEach(zone => {
+      if (!zone.models.length) return;
 
-    zone.models.forEach(model => {
+      // Zone header
+      const hdr = document.createElement('div');
+      hdr.style.cssText = 'padding:5px 14px;font-size:9px;color:#4a5568;font-family:var(--mono);letter-spacing:.08em;background:#0a1015;border-bottom:1px solid #0f1a24;';
+      hdr.textContent = zone.name.toUpperCase();
+      modelListEl.appendChild(hdr);
+
+      zone.models.forEach(model => {
         const el = document.createElement('div');
         el.className = 'model-item' +
           (model.visible ? ' visible' : '') +
@@ -814,6 +795,7 @@
 
         modelListEl.appendChild(el);
       });
+    });
   }
 
   function updateStats() {
@@ -885,6 +867,12 @@
 
     // Rotate X −90° (CAD convention → Three.js Y-up)
     geo.applyMatrix4(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(-90)));
+
+    // Center each geometry individually at origin — eliminates UTM/CAD absolute coords
+    geo.computeBoundingBox();
+    const offset = new THREE.Vector3();
+    geo.boundingBox.getCenter(offset).negate();
+    geo.translate(offset.x, offset.y, offset.z);
 
     return geo;
   }
