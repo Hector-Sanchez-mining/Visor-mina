@@ -354,7 +354,7 @@
 
   let isDragging = false;
   let prevX = 0, prevY = 0;
-  let rotX = 0, rotY = 0;
+  let rotX = -90, rotY = 0;
   let panX = 0, panY = 0;
   let zoom = 1;
 
@@ -431,7 +431,7 @@
   }, { passive: false });
 
   document.getElementById('btn-reset').addEventListener('click', () => {
-    rotX = 0; rotY = 0; panX = 0; panY = 0; zoom = 1;
+    rotX = -90; rotY = 0; panX = 0; panY = 0; zoom = 1;
     autoRotate = true;
   });
 
